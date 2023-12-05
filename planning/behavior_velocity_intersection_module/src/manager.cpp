@@ -436,11 +436,133 @@ bool MergeFromPrivateModuleManager::hasSameParentLaneletAndTurnDirectionWithRegi
   return false;
 }
 
+RoundaboutModuleManager::RoundaboutModuleManager(rclcpp::Node & node)
+: SceneModuleManagerInterface(node, getModuleName())
+{
+  const std::string ns(getModuleName());
+  auto & rp = roundabout_param_;
+  rp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
+  rp.attention_area_length =
+    node.get_parameter("intersection.common.attention_area_length").as_double();
+  rp.stopline_margin = getOrDeclareParameter<double>(node, ns + ".stopline_margin");
+  rp.path_interpolation_ds =
+    node.get_parameter("intersection.common.path_interpolation_ds").as_double();
+  rp.stop_distance_threshold = getOrDeclareParameter<double>(node, ns + ".stop_distance_threshold");
+}
+
+void RoundaboutModuleManager::launchNewModules(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+{
+  const auto routing_graph = planner_data_->route_handler_->getRoutingGraphPtr();
+  const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
+
+  const auto lanelets =
+    planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
+  for (size_t i = 0; i < lanelets.size(); i++) {
+    const auto ll = lanelets.at(i);
+    const auto lane_id = ll.id();
+    const auto module_id = lane_id;
+
+    if (isModuleRegistered(module_id)) {
+      continue;
+    }
+
+    // Is intersection?
+    const std::string turn_direction = ll.attributeOr("turn_direction", "else");
+    const auto is_intersection =
+      turn_direction == "right" || turn_direction == "left" || turn_direction == "straight";
+    if (!is_intersection) {
+      continue;
+    }
+
+    // Is merging from private road?
+    // In case the goal is in private road, check if this lanelet is conflicting with urban lanelet
+    const std::string lane_location = ll.attributeOr("roundabout", "else");
+    if (lane_location != "yes") {
+      continue;
+    }
+
+    if (hasSameParentLaneletAndTurnDirectionWithRegistered(ll)) {
+      continue;
+    }
+
+    if (i + 1 < lanelets.size()) {
+      const auto next_lane = lanelets.at(i + 1);
+      const std::string next_lane_location = next_lane.attributeOr("roundabout", "else");
+      if (next_lane_location != "yes") {
+        const auto associative_ids =
+          planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
+        registerModule(std::make_shared<RoundaboutModule>(
+          module_id, lane_id, planner_data_, roundabout_param_, associative_ids,
+          logger_.get_child("roundabout_module"), clock_));
+        continue;
+      }
+    } else {
+      const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
+      const auto conflicting_lanelets =
+        lanelet::utils::getConflictingLanelets(routing_graph_ptr, ll);
+      for (auto && conflicting_lanelet : conflicting_lanelets) {
+        const std::string conflicting_attr = conflicting_lanelet.attributeOr("roundabout", "else");
+        if (conflicting_attr == "yes") {
+          const auto associative_ids =
+            planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
+          registerModule(std::make_shared<RoundaboutModule>(
+            module_id, lane_id, planner_data_, roundabout_param_, associative_ids,
+            logger_.get_child("roundabout_module"), clock_));
+          continue;
+        }
+      }
+    }
+  }
+}
+
+std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+RoundaboutModuleManager::getModuleExpiredFunction(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+{
+  const auto lane_set = planning_utils::getLaneletsOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
+
+  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    const auto roundabout_module =
+      std::dynamic_pointer_cast<RoundaboutModule>(scene_module);
+    const auto & associative_ids = roundabout_module->getAssociativeIds();
+    for (const auto & lane : lane_set) {
+      const std::string turn_direction = lane.attributeOr("turn_direction", "else");
+      const auto is_intersection =
+        turn_direction == "right" || turn_direction == "left" || turn_direction == "straight";
+      if (!is_intersection) {
+        continue;
+      }
+
+      if (associative_ids.find(lane.id()) != associative_ids.end() /* contains */) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
+bool RoundaboutModuleManager::hasSameParentLaneletAndTurnDirectionWithRegistered(
+  const lanelet::ConstLanelet & lane) const
+{
+  for (const auto & scene_module : scene_modules_) {
+    const auto roundabout_module =
+      std::dynamic_pointer_cast<RoundaboutModule>(scene_module);
+    const auto & associative_ids = roundabout_module->getAssociativeIds();
+    if (associative_ids.find(lane.id()) != associative_ids.end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   behavior_velocity_planner::IntersectionModulePlugin, behavior_velocity_planner::PluginInterface)
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::MergeFromPrivateModulePlugin,
-  behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::MergeFromPrivateModulePlugin, behavior_velocity_planner::PluginInterface)
+PLUGINLIB_EXPORT_CLASS(
+  behavior_velocity_planner::RoundaboutModulePlugin, behavior_velocity_planner::PluginInterface)

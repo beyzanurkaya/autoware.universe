@@ -14,6 +14,7 @@
 
 #include "scene_intersection.hpp"
 #include "scene_merge_from_private_road.hpp"
+#include "scene_roundabout.hpp"
 
 #include <behavior_velocity_planner_common/utilization/debug.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
@@ -389,6 +390,36 @@ motion_utils::VirtualWalls MergeFromPrivateRoadModule::createVirtualWalls()
     wall.style = motion_utils::VirtualWallType::stop;
     wall.pose = debug_data_.virtual_wall_pose;
     wall.text = "merge_from_private_road";
+    virtual_walls.push_back(wall);
+  }
+  return virtual_walls;
+}
+visualization_msgs::msg::MarkerArray RoundaboutModule::createDebugMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray debug_marker_array;
+
+  const auto state = state_machine_.getState();
+
+  int32_t uid = planning_utils::bitShift(module_id_);
+  const auto now = this->clock_->now();
+  if (state == StateMachine::State::STOP) {
+    appendMarkerArray(
+      createPoseMarkerArray(debug_data_.stop_point_pose, "stop_point_pose", uid, 1.0, 0.0, 0.0),
+      &debug_marker_array, now);
+  }
+
+  return debug_marker_array;
+}
+
+motion_utils::VirtualWalls RoundaboutModule::createVirtualWalls()
+{
+  motion_utils::VirtualWalls virtual_walls;
+  const auto state = state_machine_.getState();
+  if (state == StateMachine::State::STOP) {
+    motion_utils::VirtualWall wall;
+    wall.style = motion_utils::VirtualWallType::stop;
+    wall.pose = debug_data_.virtual_wall_pose;
+    wall.text = "roundabout";
     virtual_walls.push_back(wall);
   }
   return virtual_walls;

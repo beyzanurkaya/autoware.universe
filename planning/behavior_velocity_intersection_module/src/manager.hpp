@@ -17,6 +17,7 @@
 
 #include "scene_intersection.hpp"
 #include "scene_merge_from_private_road.hpp"
+#include "scene_roundabout.hpp"
 
 #include <behavior_velocity_planner_common/plugin_interface.hpp>
 #include <behavior_velocity_planner_common/plugin_wrapper.hpp>
@@ -77,11 +78,32 @@ private:
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };
 
+class RoundaboutModuleManager : public SceneModuleManagerInterface
+{
+public:
+  explicit RoundaboutModuleManager(rclcpp::Node & node);
+
+  const char * getModuleName() override { return "roundabout"; }
+
+private:
+  RoundaboutModule::PlannerParam roundabout_param_;
+
+  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
+};
+
 class IntersectionModulePlugin : public PluginWrapper<IntersectionModuleManager>
 {
 };
 
 class MergeFromPrivateModulePlugin : public PluginWrapper<MergeFromPrivateModuleManager>
+{
+};
+class RoundaboutModulePlugin : public PluginWrapper<RoundaboutModuleManager>
 {
 };
 
