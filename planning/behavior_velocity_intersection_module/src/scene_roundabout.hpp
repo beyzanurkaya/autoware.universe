@@ -41,6 +41,8 @@
  * lanes before entering intersection
  */
 
+enum class PolygonType : int8_t { Vehicle = 0, Collision, SlowDownRange, SlowDown, Obstacle };
+
 namespace behavior_velocity_planner
 {
 class RoundaboutModule : public SceneModuleInterface
@@ -50,6 +52,10 @@ public:
   {
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
+    std::optional<geometry_msgs::msg::Pose> roundabout_stop_point_pose{std::nullopt};
+    std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area{std::nullopt};
+    std::vector<std::vector<Eigen::Vector3d>> obstacle_polygon;
+
   };
 
 public:
@@ -74,10 +80,15 @@ public:
    * and object predicted path
    */
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool checkCollision(std::vector<lanelet::CompoundPolygon3d> attention_area, std::shared_ptr<const PlannerData> planner_data,
+                      std::deque<Point2d> intersection_area);
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;
-
+  bool pushPolygon(
+    const std::vector<Eigen::Vector3d> & polygon);
+  bool pushPolygon(
+    const tier4_autoware_utils::Polygon2d & polygon, const double z);
   const std::set<lanelet::Id> & getAssociativeIds() const { return associative_ids_; }
 
 private:

@@ -20,7 +20,7 @@
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
-
+#include <visualization_msgs/msg/marker.hpp>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -40,6 +40,7 @@ using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerOrientation;
 using tier4_autoware_utils::createMarkerScale;
+using tier4_autoware_utils::createDefaultMarker;
 
 static visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
   const std::vector<lanelet::CompoundPolygon3d> & polygons, const std::string & ns,
@@ -378,6 +379,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
       &debug_marker_array, now);
   }
 
+
   return debug_marker_array;
 }
 
@@ -407,6 +409,36 @@ visualization_msgs::msg::MarkerArray RoundaboutModule::createDebugMarkerArray()
       createPoseMarkerArray(debug_data_.stop_point_pose, "stop_point_pose", uid, 1.0, 0.0, 0.0),
       &debug_marker_array, now);
   }
+  if (debug_data_.attention_area) {
+    appendMarkerArray(
+      createLaneletPolygonsMarkerArray(
+        debug_data_.attention_area.value(), "attention_area", lane_id_, 0.0, 1.0, 0.0),
+      &debug_marker_array);
+  }
+
+  if (!debug_data_.obstacle_polygon.empty()) {
+    auto marker = createDefaultMarker(
+      "map", now, "obstacle_polygons", 0, visualization_msgs::msg::Marker::LINE_LIST,
+      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
+
+    for (size_t i = 0; i < debug_data_.obstacle_polygon.size(); ++i) {
+      for (size_t j = 0; j < debug_data_.obstacle_polygon.at(i).size(); ++j) {
+        {
+          const auto & p = debug_data_.obstacle_polygon.at(i).at(j);
+          marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), p.z()));
+        }
+        if (j + 1 == debug_data_.obstacle_polygon.at(i).size()) {
+          const auto & p = debug_data_.obstacle_polygon.at(i).at(0);
+          marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), p.z()));
+        } else {
+          const auto & p = debug_data_.obstacle_polygon.at(i).at(j + 1);
+          marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), p.z()));
+        }
+      }
+    }
+    debug_marker_array.markers.push_back(marker);
+  }
+
 
   return debug_marker_array;
 }
@@ -420,6 +452,13 @@ motion_utils::VirtualWalls RoundaboutModule::createVirtualWalls()
     wall.style = motion_utils::VirtualWallType::stop;
     wall.pose = debug_data_.virtual_wall_pose;
     wall.text = "roundabout";
+    virtual_walls.push_back(wall);
+  }
+  if (debug_data_.roundabout_stop_point_pose) {
+    motion_utils::VirtualWall wall;
+    wall.style = motion_utils::VirtualWallType::stop;
+    wall.pose = debug_data_.roundabout_stop_point_pose.value();
+    wall.text = "obstacle_in_roundabout";
     virtual_walls.push_back(wall);
   }
   return virtual_walls;

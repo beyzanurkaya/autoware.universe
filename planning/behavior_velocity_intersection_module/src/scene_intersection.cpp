@@ -634,7 +634,7 @@ void reactRTCApprovalByDecisionResult(
   if (!rtc_default_approved) {
     // use default_rtc uuid for stuck vehicle detection
     const auto stopline_idx = decision_result.stuck_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -683,7 +683,7 @@ void reactRTCApprovalByDecisionResult(
   if (!rtc_default_approved) {
     // use default_rtc uuid for stuck vehicle detection
     const auto stopline_idx = decision_result.stuck_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -714,7 +714,7 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -836,7 +836,7 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -866,7 +866,7 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -914,7 +914,7 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.closest_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -967,7 +967,7 @@ void reactRTCApprovalByDecisionResult(
     "Safe, approval = (default: %d, occlusion: %d)", rtc_default_approved, rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
@@ -1011,7 +1011,7 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+//    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {

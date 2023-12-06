@@ -17,6 +17,7 @@
 #include "util.hpp"
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
@@ -94,7 +95,24 @@ bool RoundaboutModule::modifyPathVelocity(PathWithLaneId * path, StopReason * st
       planner_param_.attention_area_length, planner_param_.occlusion_attention_area_length,
       planner_param_.consider_wrong_direction_vehicle);
   }
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  std::deque<Point2d> intersection_area;
   auto & intersection_lanelets = intersection_lanelets_.value();
+  if (!intersection_lanelets.attention_area_.empty()) {
+    debug_data_.attention_area = intersection_lanelets.adjacent_area_;
+    if(checkCollision(intersection_lanelets.adjacent_area_, planner_data_, intersection_area)){
+      for (const auto &obj : planner_data_->predicted_objects->objects) {
+        std::cout << "collision detected" << std::endl;
+        constexpr double v = 0.0;
+        const auto object_closest_index = motion_utils::findNearestIndex(path->points, obj.kinematics.initial_pose_with_covariance.pose.position);
+        planning_utils::setVelocityFromIndex(object_closest_index - 5, v, path);
+        debug_data_.roundabout_stop_point_pose = planning_utils::getAheadPose(object_closest_index - 5, baselink2front, *path);
+        if (planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
+          state_machine_.setState(StateMachine::State::GO);
+        }
+      }
+    }
+  }
   const auto local_footprint = planner_data_->vehicle_info_.createFootprint(0.0, 0.0);
   intersection_lanelets.update(
     false, interpolated_path_info, local_footprint,
@@ -122,7 +140,6 @@ bool RoundaboutModule::modifyPathVelocity(PathWithLaneId * path, StopReason * st
   debug_data_.virtual_wall_pose = planning_utils::getAheadPose(
     stopline_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.stop_point_pose = path->points.at(stopline_idx).point.pose;
-
   /* set stop speed */
   if (state_machine_.getState() == StateMachine::State::STOP) {
     constexpr double v = 0.0;
@@ -152,6 +169,107 @@ bool RoundaboutModule::modifyPathVelocity(PathWithLaneId * path, StopReason * st
   }
 
   return true;
+}
+
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width)
+{
+  const auto mapped_point = [](const double & length_scalar, const double & width_scalar) {
+    tf2::Vector3 map;
+    map.setX(length_scalar);
+    map.setY(width_scalar);
+    map.setZ(0.0);
+    map.setW(1.0);
+    return map;
+  };
+
+  // set vertices at map coordinate
+  const tf2::Vector3 p1_map = std::invoke(mapped_point, base_to_front, -base_to_width);
+  const tf2::Vector3 p2_map = std::invoke(mapped_point, base_to_front, base_to_width);
+  const tf2::Vector3 p3_map = std::invoke(mapped_point, -base_to_rear, base_to_width);
+  const tf2::Vector3 p4_map = std::invoke(mapped_point, -base_to_rear, -base_to_width);
+
+  // transform vertices from map coordinate to object coordinate
+  tf2::Transform tf_map2obj;
+  tf2::fromMsg(current_pose, tf_map2obj);
+  const tf2::Vector3 p1_obj = tf_map2obj * p1_map;
+  const tf2::Vector3 p2_obj = tf_map2obj * p2_map;
+  const tf2::Vector3 p3_obj = tf_map2obj * p3_map;
+  const tf2::Vector3 p4_obj = tf_map2obj * p4_map;
+
+  Polygon2d object_polygon;
+  object_polygon.outer().reserve(5);
+  object_polygon.outer().emplace_back(p1_obj.x(), p1_obj.y());
+  object_polygon.outer().emplace_back(p2_obj.x(), p2_obj.y());
+  object_polygon.outer().emplace_back(p3_obj.x(), p3_obj.y());
+  object_polygon.outer().emplace_back(p4_obj.x(), p4_obj.y());
+
+  object_polygon.outer().push_back(object_polygon.outer().front());
+  object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+                     ? object_polygon
+                     : tier4_autoware_utils::inverseClockwise(object_polygon);
+  return object_polygon;
+}
+
+Polygon2d convertBasicPolygonToGeometryPolygon(const lanelet::BasicPolygon3d & basic_polygon)
+{
+  Polygon2d polygon;
+  polygon.outer().reserve(basic_polygon.size());
+  for (const auto & point : basic_polygon) {
+    polygon.outer().emplace_back(point.x(), point.y());
+  }
+  polygon.outer().push_back(polygon.outer().front());
+  polygon = tier4_autoware_utils::isClockwise(polygon)
+              ? polygon
+              : tier4_autoware_utils::inverseClockwise(polygon);
+  return polygon;
+}
+
+bool RoundaboutModule::pushPolygon(
+  const std::vector<Eigen::Vector3d> & polygon)
+{
+  if (debug_data_.obstacle_polygon.empty()){
+    debug_data_.obstacle_polygon.push_back(polygon);
+    return true;
+  }
+  return false;
+}
+
+bool RoundaboutModule::pushPolygon(
+  const tier4_autoware_utils::Polygon2d & polygon, const double z)
+{
+  std::vector<Eigen::Vector3d> eigen_polygon;
+  for (const auto & point : polygon.outer()) {
+    Eigen::Vector3d eigen_point;
+    eigen_point << point.x(), point.y(), z;
+    eigen_polygon.push_back(eigen_point);
+  }
+  return pushPolygon(eigen_polygon);
+}
+
+bool RoundaboutModule::checkCollision(std::vector<lanelet::CompoundPolygon3d> attention_area,
+                                      std::shared_ptr<const PlannerData> planner_data,
+                                      [[maybe_unused]]std::deque<Point2d> intersection_area){
+
+  // extract target objects
+  util::TargetObjects target_objects;
+  target_objects.header = planner_data->predicted_objects->header;
+  for (const auto & obj : planner_data->predicted_objects->objects) {
+    const double & length_m = obj.shape.dimensions.x / 2;
+    const double & width_m = obj.shape.dimensions.y / 2;
+    const auto object_polgon = convertBoundingBoxObjectToGeometryPolygon(obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
+    pushPolygon(object_polgon, obj.kinematics.initial_pose_with_covariance.pose.position.z);
+    //check if object is in attention area
+    for (const auto & area : attention_area) {
+      const auto area_polgon = convertBasicPolygonToGeometryPolygon(area.basicPolygon());
+      if (bg::within(object_polgon, area_polgon)) {
+        std::cout << "object is in attention area" << std::endl;
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 }  // namespace behavior_velocity_planner
