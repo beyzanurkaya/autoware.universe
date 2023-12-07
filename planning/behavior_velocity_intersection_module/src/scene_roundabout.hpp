@@ -55,6 +55,7 @@ public:
     std::optional<geometry_msgs::msg::Pose> roundabout_stop_point_pose{std::nullopt};
     std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area{std::nullopt};
     std::vector<std::vector<Eigen::Vector3d>> obstacle_polygon;
+    std::optional<geometry_msgs::msg::Pose> collision_stop_wall_pose{std::nullopt};
 
   };
 
@@ -68,7 +69,64 @@ public:
     double path_interpolation_ds;
     double occlusion_attention_area_length;
     bool consider_wrong_direction_vehicle;
+    double attention_area_margin;
+    double attention_area_angle_threshold;
+    bool use_intersection_area;
+    double default_stopline_margin;
+    double stopline_overshoot_margin;
+    double max_accel;
+    double max_jerk;
+    double delay_response_time;
+    struct CollisionDetection
+    {
+      bool consider_wrong_direction_vehicle;
+      double collision_detection_hold_time;
+      double min_predicted_path_confidence;
+      double keep_detection_velocity_threshold;
+      struct VelocityProfile
+      {
+        bool use_upstream;
+        double minimum_upstream_velocity;
+        double default_velocity;
+        double minimum_default_velocity;
+      } velocity_profile;
+      struct FullyPrioritized
+      {
+        double collision_start_margin_time;
+        double collision_end_margin_time;
+      } fully_prioritized;
+      struct PartiallyPrioritized
+      {
+        double collision_start_margin_time;
+        double collision_end_margin_time;
+      } partially_prioritized;
+      struct NotPrioritized
+      {
+        double collision_start_margin_time;
+        double collision_end_margin_time;
+      } not_prioritized;
+      struct YieldOnGreeTrafficLight
+      {
+        double distance_to_assigned_lanelet_start;
+        double duration;
+        double object_dist_to_stopline;
+      } yield_on_green_traffic_light;
+      struct IgnoreOnAmberTrafficLight
+      {
+        double object_expected_deceleration;
+      } ignore_on_amber_traffic_light;
+      struct IgnoreOnRedTrafficLight
+      {
+        double object_margin_to_path;
+      } ignore_on_red_traffic_light;
+    } collision_detection;
+
+    struct Debug
+    {
+      std::vector<int64_t> ttc;
+    } debug;
   };
+
 
   RoundaboutModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
@@ -80,8 +138,18 @@ public:
    * and object predicted path
    */
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
-  bool checkCollision(std::vector<lanelet::CompoundPolygon3d> attention_area, std::shared_ptr<const PlannerData> planner_data,
+  bool checkRoundaboutCircle(std::vector<lanelet::CompoundPolygon3d> attention_area, std::shared_ptr<const PlannerData> planner_data,
                       std::deque<Point2d> intersection_area);
+
+  bool checkCollision(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    util::TargetObjects * target_objects, const util::PathLanelets & path_lanelets,
+    const size_t closest_idx, const size_t last_intersection_stopline_candidate_idx,
+    const double time_delay);
+
+  util::TargetObjects generateTargetObjects(
+    const util::IntersectionLanelets & intersection_lanelets,
+    const std::optional<Polygon2d> & intersection_area) const;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   motion_utils::VirtualWalls createVirtualWalls() override;

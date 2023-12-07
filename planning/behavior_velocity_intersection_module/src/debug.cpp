@@ -446,19 +446,23 @@ visualization_msgs::msg::MarkerArray RoundaboutModule::createDebugMarkerArray()
 motion_utils::VirtualWalls RoundaboutModule::createVirtualWalls()
 {
   motion_utils::VirtualWalls virtual_walls;
+  motion_utils::VirtualWall wall;
   const auto state = state_machine_.getState();
   if (state == StateMachine::State::STOP) {
-    motion_utils::VirtualWall wall;
     wall.style = motion_utils::VirtualWallType::stop;
     wall.pose = debug_data_.virtual_wall_pose;
     wall.text = "roundabout";
     virtual_walls.push_back(wall);
   }
   if (debug_data_.roundabout_stop_point_pose) {
-    motion_utils::VirtualWall wall;
-    wall.style = motion_utils::VirtualWallType::stop;
     wall.pose = debug_data_.roundabout_stop_point_pose.value();
-    wall.text = "obstacle_in_roundabout";
+    wall.text = "obstacle_in_roundabout_circle";
+    virtual_walls.push_back(wall);
+  }
+  if (debug_data_.collision_stop_wall_pose) {
+    wall.text = "obstacle_in_attention_area";
+    wall.ns = "roundabout" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.collision_stop_wall_pose.value();
     virtual_walls.push_back(wall);
   }
   return virtual_walls;
