@@ -448,54 +448,7 @@ RoundaboutModuleManager::RoundaboutModuleManager(rclcpp::Node & node)
   rp.path_interpolation_ds =
     node.get_parameter("intersection.common.path_interpolation_ds").as_double();
   rp.stop_distance_threshold = getOrDeclareParameter<double>(node, ns + ".stop_distance_threshold");
-  rp.collision_detection.consider_wrong_direction_vehicle =
-    getOrDeclareParameter<bool>(node, ns + ".collision_detection.consider_wrong_direction_vehicle");
-  rp.collision_detection.collision_detection_hold_time =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.collision_detection_hold_time");
-  rp.collision_detection.min_predicted_path_confidence =
-    getOrDeclareParameter<double>(node, ns + ".collision_detection.min_predicted_path_confidence");
-  rp.collision_detection.keep_detection_velocity_threshold = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.keep_detection_velocity_threshold");
-  rp.collision_detection.velocity_profile.use_upstream =
-    getOrDeclareParameter<bool>(node, ns + ".collision_detection.velocity_profile.use_upstream");
-  rp.collision_detection.velocity_profile.minimum_upstream_velocity = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.velocity_profile.minimum_upstream_velocity");
-  rp.collision_detection.velocity_profile.default_velocity = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.velocity_profile.default_velocity");
-  rp.collision_detection.velocity_profile.minimum_default_velocity = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.velocity_profile.minimum_default_velocity");
-  rp.collision_detection.fully_prioritized.collision_start_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.fully_prioritized.collision_start_margin_time");
-  rp.collision_detection.fully_prioritized.collision_end_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.fully_prioritized.collision_end_margin_time");
-  rp.collision_detection.partially_prioritized.collision_start_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.partially_prioritized.collision_start_margin_time");
-  rp.collision_detection.partially_prioritized.collision_end_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.partially_prioritized.collision_end_margin_time");
-  rp.collision_detection.not_prioritized.collision_start_margin_time =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.not_prioritized.collision_start_margin_time");
-  rp.collision_detection.not_prioritized.collision_end_margin_time = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.not_prioritized.collision_end_margin_time");
-  rp.collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start =
-    getOrDeclareParameter<double>(
-      node,
-      ns + ".collision_detection.yield_on_green_traffic_light.distance_to_assigned_lanelet_start");
-  rp.collision_detection.yield_on_green_traffic_light.duration = getOrDeclareParameter<double>(
-    node, ns + ".collision_detection.yield_on_green_traffic_light.duration");
-  rp.collision_detection.yield_on_green_traffic_light.object_dist_to_stopline =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.yield_on_green_traffic_light.object_dist_to_stopline");
-  rp.collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.ignore_on_amber_traffic_light.object_expected_deceleration");
-  rp.collision_detection.ignore_on_red_traffic_light.object_margin_to_path =
-    getOrDeclareParameter<double>(
-      node, ns + ".collision_detection.ignore_on_red_traffic_light.object_margin_to_path");
+
 }
 
 void RoundaboutModuleManager::launchNewModules(

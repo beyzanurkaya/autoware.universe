@@ -409,35 +409,6 @@ visualization_msgs::msg::MarkerArray RoundaboutModule::createDebugMarkerArray()
       createPoseMarkerArray(debug_data_.stop_point_pose, "stop_point_pose", uid, 1.0, 0.0, 0.0),
       &debug_marker_array, now);
   }
-  if (debug_data_.attention_area) {
-    appendMarkerArray(
-      createLaneletPolygonsMarkerArray(
-        debug_data_.attention_area.value(), "attention_area", lane_id_, 0.0, 1.0, 0.0),
-      &debug_marker_array);
-  }
-
-  if (!debug_data_.obstacle_polygon.empty()) {
-    auto marker = createDefaultMarker(
-      "map", now, "obstacle_polygons", 0, visualization_msgs::msg::Marker::LINE_LIST,
-      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
-
-    for (size_t i = 0; i < debug_data_.obstacle_polygon.size(); ++i) {
-      for (size_t j = 0; j < debug_data_.obstacle_polygon.at(i).size(); ++j) {
-        {
-          const auto & p = debug_data_.obstacle_polygon.at(i).at(j);
-          marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), p.z()));
-        }
-        if (j + 1 == debug_data_.obstacle_polygon.at(i).size()) {
-          const auto & p = debug_data_.obstacle_polygon.at(i).at(0);
-          marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), p.z()));
-        } else {
-          const auto & p = debug_data_.obstacle_polygon.at(i).at(j + 1);
-          marker.points.push_back(tier4_autoware_utils::createPoint(p.x(), p.y(), p.z()));
-        }
-      }
-    }
-    debug_marker_array.markers.push_back(marker);
-  }
 
 
   return debug_marker_array;
@@ -446,23 +417,12 @@ visualization_msgs::msg::MarkerArray RoundaboutModule::createDebugMarkerArray()
 motion_utils::VirtualWalls RoundaboutModule::createVirtualWalls()
 {
   motion_utils::VirtualWalls virtual_walls;
-  motion_utils::VirtualWall wall;
   const auto state = state_machine_.getState();
   if (state == StateMachine::State::STOP) {
+    motion_utils::VirtualWall wall;
     wall.style = motion_utils::VirtualWallType::stop;
     wall.pose = debug_data_.virtual_wall_pose;
     wall.text = "roundabout";
-    virtual_walls.push_back(wall);
-  }
-  if (debug_data_.roundabout_stop_point_pose) {
-    wall.pose = debug_data_.roundabout_stop_point_pose.value();
-    wall.text = "obstacle_in_roundabout_circle";
-    virtual_walls.push_back(wall);
-  }
-  if (debug_data_.collision_stop_wall_pose) {
-    wall.text = "obstacle_in_attention_area";
-    wall.ns = "roundabout" + std::to_string(module_id_) + "_";
-    wall.pose = debug_data_.collision_stop_wall_pose.value();
     virtual_walls.push_back(wall);
   }
   return virtual_walls;
