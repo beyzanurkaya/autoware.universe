@@ -82,6 +82,8 @@ class PathGenerator
 public:
   PathGenerator(const double sampling_time_interval, const double min_crosswalk_user_velocity);
 
+  PredictedPath shiftPath(const PredictedPath & path, const double shift_distance);
+
   PredictedPath generatePathForNonVehicleObject(
     const TrackedObject & object, const double duration) const;
 

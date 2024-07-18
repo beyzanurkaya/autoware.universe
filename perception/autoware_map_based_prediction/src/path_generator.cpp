@@ -29,6 +29,21 @@ PathGenerator::PathGenerator(
 {
 }
 
+PredictedPath PathGenerator::shiftPath(const PredictedPath & path, const double shift_distance)
+{
+  //lateral shift of the path by shift_distance
+  PredictedPath shifted_path;
+  shifted_path.time_step = path.time_step;
+  shifted_path.confidence = path.confidence;
+  shifted_path.path.reserve(path.path.size());
+  for (const auto & pose : path.path) {
+    geometry_msgs::msg::Pose shifted_pose = pose;
+    shifted_pose.position.x += shift_distance;
+    shifted_path.path.push_back(shifted_pose);
+  }
+
+  return shifted_path;
+}
 PredictedPath PathGenerator::generatePathForNonVehicleObject(
   const TrackedObject & object, const double duration) const
 {
