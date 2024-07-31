@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "autoware/behavior_path_dynamic_obstacle_avoidance_module/scene.hpp"
-#include "autoware/behavior_path_dynamic_obstacle_avoidance_module/utils.hpp"
 
+#include "autoware/behavior_path_dynamic_obstacle_avoidance_module/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
@@ -432,8 +432,8 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
       throw std::logic_error("The polygon_generation_method's string is invalid.");
     }();
     if (obstacle_poly) {
-//      obstacles_for_drivable_area.push_back(
-//        {object.pose, obstacle_poly.value(), object.is_collision_left});
+      //      obstacles_for_drivable_area.push_back(
+      //        {object.pose, obstacle_poly.value(), object.is_collision_left});
 
       appendObjectMarker(info_marker_, object.pose);
       appendExtractedPolygonMarker(debug_marker_, obstacle_poly.value(), object.pose.position.z);
@@ -445,15 +445,14 @@ BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
   // generate drivable lanes
   auto current_lanelets = utils::dynamic_obstacle_avoidance::getCurrentLanesFromPath(
     getPreviousModuleOutput().reference_path, planner_data_);
-  std::for_each(
-    current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
-      current_drivable_area_info.drivable_lanes.push_back(
-        utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
-          lanelet, planner_data_, parameters_));
-    });
+  std::for_each(current_lanelets.begin(), current_lanelets.end(), [&](const auto & lanelet) {
+    current_drivable_area_info.drivable_lanes.push_back(
+      utils::dynamic_obstacle_avoidance::generateExpandedDrivableLanes(
+        lanelet, planner_data_, parameters_));
+  });
 
-//  current_drivable_area_info.drivable_lanes =
-//    getPreviousModuleOutput().drivable_area_info.drivable_lanes;
+  //  current_drivable_area_info.drivable_lanes =
+  //    getPreviousModuleOutput().drivable_area_info.drivable_lanes;
   current_drivable_area_info.obstacles = obstacles_for_drivable_area;
   current_drivable_area_info.enable_expanding_hatched_road_markings =
     parameters_->use_hatched_road_markings;

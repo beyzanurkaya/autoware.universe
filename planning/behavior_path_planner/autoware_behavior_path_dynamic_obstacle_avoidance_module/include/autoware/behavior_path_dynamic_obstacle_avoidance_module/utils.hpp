@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
 
-#include "autoware/behavior_path_planner_common/data_manager.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_dynamic_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_dynamic_obstacle_avoidance_module/scene.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <memory>
 #include <utility>
@@ -35,7 +35,8 @@ using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVeloc
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 
 static constexpr const char * logger_namespace =
-  "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.dynamic_obstacle_"
+  "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.dynamic_"
+  "obstacle_"
   "avoidance.utils";
 
 bool isOnRight(const ObjectData & obj);
@@ -178,4 +179,4 @@ double calcDistanceToAvoidStartLine(
 
 }  // namespace autoware::behavior_path_planner::utils::dynamic_obstacle_avoidance
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_

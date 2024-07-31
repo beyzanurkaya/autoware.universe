@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 
+#include "autoware/behavior_path_dynamic_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
-#include "autoware/behavior_path_dynamic_obstacle_avoidance_module/type_alias.hpp"
 
 #include <rclcpp/time.hpp>
 
@@ -679,4 +679,4 @@ struct DebugData
 
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
