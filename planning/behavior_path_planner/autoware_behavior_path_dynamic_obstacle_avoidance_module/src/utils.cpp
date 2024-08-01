@@ -2329,6 +2329,7 @@ DrivableLanes generateExpandedDrivableLanes(
   const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<DynamicAvoidanceParameters> & parameters)
 {
+  std::cout << "generateExpandedDrivableLanes" << std::endl;
   const auto & route_handler = planner_data->route_handler;
 
   DrivableLanes current_drivable_lanes;
