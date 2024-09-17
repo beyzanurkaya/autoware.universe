@@ -1129,7 +1129,7 @@ bool DynamicObstacleAvoidanceModule::willObjectCutIn(
     return false;
   }
 
-  return true;
+  return false;
 }
 
 DynamicObstacleAvoidanceModule::DecisionWithReason DynamicObstacleAvoidanceModule::willObjectCutOut(

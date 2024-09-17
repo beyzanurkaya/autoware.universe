@@ -282,11 +282,16 @@ public:
 
       // update valid object uuids and its variable
       for (const auto & counter : counter_map_) {
-        if (!isInVector(counter.first, valid_object_uuids_) && max_count_ <= counter.second) {
-          valid_object_uuids_.push_back(counter.first);
+        valid_object_uuids_.push_back(counter.first);
+        object_map_.at(counter.first).ego_lat_feasible_paths = ego_lat_feasible_paths;
           object_map_.at(counter.first).ego_lat_feasible_paths = ego_lat_feasible_paths;
-        }
+//        if (!isInVector(counter.first, valid_object_uuids_) && max_count_ <= counter.second) {
+//          std::cout << "counter.first: " << counter.first << std::endl;
+//          valid_object_uuids_.push_back(counter.first);
+//          object_map_.at(counter.first).ego_lat_feasible_paths = ego_lat_feasible_paths;
+//        }
       }
+
       valid_object_uuids_.erase(
         std::remove_if(
           valid_object_uuids_.begin(), valid_object_uuids_.end(),
